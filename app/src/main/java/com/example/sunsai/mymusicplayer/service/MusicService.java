@@ -10,6 +10,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 import com.example.sunsai.mymusicplayer.PlayerActivity;
+import com.orhanobut.logger.Logger;
 
 public class MusicService extends Service {
 
@@ -25,7 +26,7 @@ public class MusicService extends Service {
       "com.spsl.sample.musicplayer.CMD_MUSICSERVICE_PREV";
   public static final String CMD_MUSICSERVICE_RESUM =
       "com.spsl.sample.musicplayer.CMD_MUSICSERVICE_RESUM";
-public static final String CMD_MUSICSERVICE_SEEKTO =
+  public static final String CMD_MUSICSERVICE_SEEKTO =
       "com.spsl.sample.musicplayer.CMD_MUSICSERVICE_SEEKTO111";
 
   private LocalBroadcastManager localBroadcastManager;
@@ -39,6 +40,7 @@ public static final String CMD_MUSICSERVICE_SEEKTO =
   private MediaPlayer mediaPlayer;
 
   public static final String TAG = "MusicService";
+
   public MusicService() {
   }
 
@@ -80,7 +82,7 @@ public static final String CMD_MUSICSERVICE_SEEKTO =
   }
 
   private void seekTo(Intent intent) {
-    Log.d(TAG, "seekTo");
+    Logger.d("seekTo");
     if (null != mediaPlayer) {
       int seekTo = intent.getIntExtra("SEEK_TO", -1);
       if (seekTo > -1) {
@@ -124,7 +126,7 @@ public static final String CMD_MUSICSERVICE_SEEKTO =
   }
 
   public void next(Intent intent) {
-    
+
   }
 
   public void prev(Intent intent) {
@@ -132,25 +134,20 @@ public static final String CMD_MUSICSERVICE_SEEKTO =
   }
 
   public void sendBroadCast() {
-    Log.i(TAG, "sendBroadCast");
     Intent intent = new Intent();
     intent.setAction(PlayerActivity.BROADCAST_MUSICPLAYER);
-    intent.putExtra("CurrentPosition",mediaPlayer.getCurrentPosition());
-    intent.putExtra("Duration",mediaPlayer.getDuration());
+    intent.putExtra("CurrentPosition", mediaPlayer.getCurrentPosition());
+    intent.putExtra("Duration", mediaPlayer.getDuration());
     localBroadcastManager.sendBroadcast(intent);
   }
 
   private Handler handler = new Handler() {
     @Override public void handleMessage(Message msg) {
       super.handleMessage(msg);
-
-      Log.i(TAG, "handleMessage");
-
       sendBroadCast();
       if (currentState == state.PLAYING) {
-        sendEmptyMessageDelayed(0, 1000);
+        sendEmptyMessageDelayed(0, 300);
       }
     }
   };
-
 }

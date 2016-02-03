@@ -14,11 +14,12 @@ import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import com.example.sunsai.mymusicplayer.service.MusicService;
+import com.orhanobut.logger.Logger;
 
 /**
  * Created by sunsai on 2016/2/3.
  */
-public class PlayerActivity extends AppCompatActivity implements View.OnClickListener{
+public class PlayerActivity extends AppCompatActivity implements View.OnClickListener {
 
   private TextView line1;
   private TextView line2;
@@ -30,14 +31,17 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
   private Button playOrpause;
   private Button next;
 
-  public static final String BROADCAST_MUSICPLAYER = "com.spsl.sample.musicplayer.BROADCAST_MUSICPLAYER";
+  public static final String BROADCAST_MUSICPLAYER =
+      "com.spsl.sample.musicplayer.BROADCAST_MUSICPLAYER";
   private boolean isPlaying = false;
 
   private boolean isPause = false;
 
   private static final String TAG = "PlayerActivity";
 
+  private BroadcastReceiver broadcastReceiver;
   private LocalBroadcastManager localBroadcastManager;
+
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_player);
@@ -46,19 +50,18 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     registerBroadcast();
   }
 
-
-
-
-
   private void registerBroadcast() {
     localBroadcastManager = LocalBroadcastManager.getInstance(this);
+    broadcastReceiver = new MusicReceiver();
     IntentFilter inf = new IntentFilter();
     inf.addAction(BROADCAST_MUSICPLAYER);
-    localBroadcastManager.registerReceiver(new MusicReceiver(), inf);
+    localBroadcastManager.registerReceiver(broadcastReceiver, inf);
   }
 
   @Override public void onStop() {
     super.onStop();
+    Logger.d("onStop");
+    localBroadcastManager.unregisterReceiver(broadcastReceiver);
   }
 
   private void initView() {
@@ -71,9 +74,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     prev = (Button) findViewById(R.id.prev);
     playOrpause = (Button) findViewById(R.id.play_pause);
     next = (Button) findViewById(R.id.next);
-
-
-
   }
 
   public void registerOnClick() {
@@ -83,7 +83,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
 
     seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        Log.d(TAG, "onProgressChanged");
       }
 
       @Override public void onStartTrackingTouch(SeekBar seekBar) {
@@ -95,7 +94,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         seekTo(seek.getProgress());
       }
     });
-
   }
 
   @Override public void onDestroy() {
@@ -111,7 +109,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         if (!isPlaying) {
           isPlaying = true;
           play();
-        } else if (isPause){
+        } else if (isPause) {
           resume();
         } else {
           pause();
@@ -141,17 +139,19 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
   private void play() {
     Log.d("", "player play");
     playOrpause.setText(getString(R.string.pause));
-    String url = "http://yinyueshiting.baidu.com/data2/music/242383503/242383503.mp3?xcode=42b17cb7c88fb43ab6f28ebc1a3b5868";
+    String url =
+        "http://yinyueshiting.baidu.com/data2/music/242383503/242383503.mp3?xcode=42b17cb7c88fb43ab6f28ebc1a3b5868";
     Intent intent = new Intent(this, MusicService.class);
     intent.setAction(MusicService.CMD_MUSICSERVICE_PLAY);
     intent.putExtra("url", url);
     startService(intent);
   }
-  private void seekTo(int seekto) {
+
+  private void seekTo(int position) {
     Log.d(TAG, "seekTo");
     Intent intent = new Intent(this, MusicService.class);
     intent.setAction(MusicService.CMD_MUSICSERVICE_SEEKTO);
-    intent.putExtra("SEEK_TO", seekto);
+    intent.putExtra("SEEK_TO", position);
     startService(intent);
   }
 
@@ -166,8 +166,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
   public class MusicReceiver extends BroadcastReceiver {
 
     @Override public void onReceive(Context context, Intent intent) {
-      int posi = intent.getIntExtra("CurrentPosition",0);
-      int duration = intent.getIntExtra("Duration",0);
+      int posi = intent.getIntExtra("CurrentPosition", 0);
+      int duration = intent.getIntExtra("Duration", 0);
       seekBar.setMax(duration);
       seekBar.setProgress(posi);
       startText.setText(getStrTime(posi));
@@ -181,14 +181,14 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
       String time = "";
 
       if (m < 10) {
-        time = "0" + m ;
+        time = "0" + m;
       } else {
         time = "" + m;
       }
       time += ":";
 
       if (s < 10) {
-        time = time +"0" + s;
+        time = time + "0" + s;
       } else {
         time = time + s;
       }
